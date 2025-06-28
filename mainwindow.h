@@ -1,5 +1,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
+#include "assignmentscores.h"
 
 #include <QMainWindow>
 
@@ -19,5 +20,6 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    void loadStudentsAssignments(const QList<assignmentscores>& assignments);
 };
 #endif // MAINWINDOW_H

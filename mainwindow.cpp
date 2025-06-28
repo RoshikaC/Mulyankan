@@ -1,6 +1,6 @@
 #include "mainwindow.h"
+#include <QPixmap>
 #include "ui_mainwindow.h"
-#include<QPixmap>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -12,9 +12,6 @@ MainWindow::MainWindow(QWidget *parent)
     int w = ui->label_pic->width();
     int h = ui->label_pic->height();
     ui->label_pic->setPixmap(pix.scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-
-
-
 }
 
 MainWindow::~MainWindow()

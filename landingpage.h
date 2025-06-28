@@ -15,6 +15,9 @@ public:
     explicit landingpage(QWidget *parent = nullptr);
     ~landingpage();
 
+signals:
+    void goToScoresClicked();
+
 private:
     Ui::landingpage *ui;
 };
