@@ -1,18 +1,20 @@
 #include "assignmentscores.h"
-#include "ui_assignmentscores.h"
-#include <QStandardItemModel>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QStandardItemModel>
 #include <QTextEdit>
+#include "ui_assignmentscores.h"
 //#include <QDialog>
 
-assignmentscores::assignmentscores(QWidget *parent) : QDialog(parent), ui(new Ui::assignmentscores)
+assignmentscores::assignmentscores(QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::assignmentscores)
 {
     ui->setupUi(this);
 
     setWindowTitle("Mulyankan");
 
-    int numRows = 5;//have to be able to increase or decrease the rows and columns
+    int numRows = 5; //have to be able to increase or decrease the rows and columns
     int numCols = 11;
     QStandardItemModel *model = new QStandardItemModel(numRows, numCols, this);
     model->setHorizontalHeaderItem(0, new QStandardItem(QString("Student Name")));
@@ -49,21 +51,23 @@ void assignmentscores::on_backButton_clicked()
     close();
 }
 
-
 void assignmentscores::on_saveButton_clicked()
 {
-    QString currentFile = QFileDialog::getSaveFileName(this, "Save As", "", "CSV File (*.csv);;Text File (*.txt)");
+    QString currentFile = QFileDialog::getSaveFileName(this,
+                                                       "Save As",
+                                                       "",
+                                                       "CSV File (*.csv);;Text File (*.txt)");
 
     if (currentFile.isEmpty()) {
         return;
     }
     QFile file(currentFile);
-    if(!file.open(QIODevice::WriteOnly | QFile::Text)){
-        QMessageBox::warning(this,"WARNING","Cannot save file:"+file.errorString());
+    if (!file.open(QIODevice::WriteOnly | QFile::Text)) {
+        QMessageBox::warning(this, "WARNING", "Cannot save file:" + file.errorString());
         return;
     }
     QTextStream out(&file);
-    QStandardItemModel *model = qobject_cast<QStandardItemModel*>(ui->assignmentTableView->model());
+    QStandardItemModel *model = qobject_cast<QStandardItemModel *>(ui->assignmentTableView->model());
     if (!model) {
         QMessageBox::critical(this, "Error", "Could not get table model.");
         return;
@@ -80,4 +84,3 @@ void assignmentscores::on_saveButton_clicked()
     file.close();
     QMessageBox::information(this, "Success", "File saved successfully!");
 }
-

@@ -33,8 +33,8 @@
 //     return a.exec();
 // }
 
-#include "landingpage.h"       // Your landing page window
-#include "assignmentscores.h"  // Your scores window
+#include "assignmentscores.h" // Your scores window
+#include "landingpage.h"      // Your landing page window
 //#include "ui_landingpage.h"
 #include <QApplication>
 #include <QObject>
@@ -50,12 +50,15 @@ int main(int argc, char *argv[])
 
     // 2. Connect the "back" signal from the scores dialog.
     // When scoresDialog emits "backButtonPressed", we want to show the landing page.
-    QObject::connect(&scoresDialog, &assignmentscores::backToLandingPage, &landingPage, &landingpage::show);
+    QObject::connect(&scoresDialog,
+                     &assignmentscores::backToLandingPage,
+                     &landingPage,
+                     &landingpage::show);
 
     // 3. Connect the button on your landing page to show the scores dialog.
     //    (Assuming your button on landingpage is named 'goToScoresButton')
     // When the button is clicked, hide the landing page and show the scores dialog.
-    QObject::connect(&landingPage, &landingpage::goToScoresClicked, [&](){
+    QObject::connect(&landingPage, &landingpage::goToScoresClicked, [&]() {
         landingPage.hide();
         scoresDialog.show();
     });
@@ -71,7 +74,6 @@ int main(int argc, char *argv[])
     // --- For normal application flow, show the landing page first: ---
     landingPage.show();
     */
-
 
     return a.exec();
 }

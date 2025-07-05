@@ -20,6 +20,6 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    void loadStudentsAssignments(const QList<assignmentscores>& assignments);
+    void loadStudentsAssignments(const QList<assignmentscores> &assignments);
 };
 #endif // MAINWINDOW_H
