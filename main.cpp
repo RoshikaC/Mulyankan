@@ -2,6 +2,11 @@
 // #include <QScreen>
 // #include <QSplashScreen>
 // #include <QTimer>
+// #include <QObject>
+// #include <QPushButton>
+// #include <QSqlDatabase>
+// #include <QMessageBox>
+// #include <QDebug>
 // #include "mainwindow.h"
 // int main(int argc, char *argv[])
 // {
@@ -39,6 +44,9 @@
 #include <QApplication>
 #include <QObject>
 #include <QPushButton>
+#include <QSqlDatabase> // Make sure to include this
+#include <QMessageBox>  // Good for error reporting
+#include <QDebug>
 
 int main(int argc, char *argv[])
 {
@@ -46,34 +54,18 @@ int main(int argc, char *argv[])
 
     // 1. Create instances of BOTH windows. They exist in memory but are not visible yet.
     landingpage landingPage;
-    assignmentscores scoresDialog;
 
-    // 2. Connect the "back" signal from the scores dialog.
-    // When scoresDialog emits "backButtonPressed", we want to show the landing page.
-    QObject::connect(&scoresDialog,
-                     &assignmentscores::backToLandingPage,
-                     &landingPage,
-                     &landingpage::show);
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName("your_database_file.db"); // Make sure this path is correct
 
-    // 3. Connect the button on your landing page to show the scores dialog.
-    //    (Assuming your button on landingpage is named 'goToScoresButton')
-    // When the button is clicked, hide the landing page and show the scores dialog.
-    QObject::connect(&landingPage, &landingpage::goToScoresClicked, [&]() {
-        landingPage.hide();
-        scoresDialog.show();
-    });
+    if (!db.open()) {
+        QMessageBox::critical(nullptr, "Database Error", "Could not open the database!");
+        return -1; // Exit if the database can't be opened
+    }
 
-    // ======================================================================
-    // === CHOOSE WHICH WINDOW TO SHOW FIRST FOR TESTING ====================
-    // ======================================================================
-
-    // --- To test the assignmentscores dialog, show it first: ---
-    scoresDialog.show();
-
-    /*
-    // --- For normal application flow, show the landing page first: ---
-    landingPage.show();
-    */
+    // --- Step 2: Create the dialog and pass the database ---
+    assignmentscores w(db); // Pass the 'db' object here
+    w.show();
 
     return a.exec();
 }

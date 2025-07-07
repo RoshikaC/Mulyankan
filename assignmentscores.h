@@ -1,19 +1,24 @@
 #ifndef ASSIGNMENTSCORES_H
 #define ASSIGNMENTSCORES_H
+//#include "qdialog.h"
 #include "qdialog.h"
-//#include <QMainWindow>
-#include <QDialog>
+#include <QMainWindow>
+#include <QSqlDatabase>
+
+class QSqlTableModel;
+class QSortFilterProxyModel;
+class QAbstractItemModel;
 
 namespace Ui {
 class assignmentscores;
 }
 
-class assignmentscores : public QDialog
+class assignmentscores : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit assignmentscores(QWidget *parent = nullptr);
+    explicit assignmentscores(QSqlDatabase db, QWidget *parent = nullptr);
     ~assignmentscores();
 
 signals:
@@ -24,9 +29,14 @@ private slots:
 
     void on_saveButton_clicked();
 
+    void on_addStudentButton_clicked();
+
+    void on_DeleteStudentButton_clicked();
+
 private:
     Ui::assignmentscores *ui;
-    //QString currentFile;
+    QSqlTableModel *mainModel;
+    QSortFilterProxyModel *proxyModel;
 };
 
 #endif // ASSIGNMENTSCORES_H

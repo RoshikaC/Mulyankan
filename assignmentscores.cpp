@@ -2,41 +2,44 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QStandardItemModel>
-#include <QTextEdit>
 #include "ui_assignmentscores.h"
-//#include <QDialog>
+#include <QSqlTableModel>
+#include <QSortFilterProxyModel>
+#include <QTextStream>
+#include <QSqlError>
+#include <QDebug>
 
-assignmentscores::assignmentscores(QWidget *parent)
-    : QDialog(parent)
+assignmentscores::assignmentscores(QSqlDatabase db, QWidget *parent)
+    : QMainWindow(parent)
     , ui(new Ui::assignmentscores)
+    , mainModel(nullptr)
+    , proxyModel(nullptr)
 {
     ui->setupUi(this);
 
     setWindowTitle("Mulyankan");
 
-    int numRows = 5; //have to be able to increase or decrease the rows and columns
-    int numCols = 11;
-    QStandardItemModel *model = new QStandardItemModel(numRows, numCols, this);
-    model->setHorizontalHeaderItem(0, new QStandardItem(QString("Student Name")));
-    model->setHorizontalHeaderItem(1, new QStandardItem(QString("Total Attendance_Score")));
-    model->setHorizontalHeaderItem(2, new QStandardItem(QString("Assignment 1")));
-    model->setHorizontalHeaderItem(3, new QStandardItem(QString("Assignment 2")));
-    model->setHorizontalHeaderItem(4, new QStandardItem(QString("Assignment 3")));
-    model->setHorizontalHeaderItem(5, new QStandardItem(QString("MCQ")));
-    model->setHorizontalHeaderItem(6, new QStandardItem(QString("Internal 1")));
-    model->setHorizontalHeaderItem(7, new QStandardItem(QString("Internal 2")));
-    model->setHorizontalHeaderItem(8, new QStandardItem(QString("Lab Exam")));
-    model->setHorizontalHeaderItem(9, new QStandardItem(QString("Viva")));
-    model->setHorizontalHeaderItem(10, new QStandardItem(QString("Total")));
+    mainModel=new QSqlTableModel(this,db);
+    mainModel->setTable("students");
 
-    for (int row = 0; row < numRows; ++row) {
-        for (int col = 0; col < numCols; ++col) {
-            QStandardItem *item = new QStandardItem(" ");
-            model->setItem(row, col, item);
-        }
+    mainModel->setEditStrategy(QSqlTableModel::OnManualSubmit);
+
+    mainModel->setHeaderData(0,Qt::Horizontal,tr("Student Name"));
+    mainModel->setHeaderData(1,Qt::Horizontal,tr("Assignment 1"));
+    mainModel->setHeaderData(2,Qt::Horizontal,tr("Assignment 2"));
+    mainModel->setHeaderData(3,Qt::Horizontal,tr("Assignment 3"));
+    mainModel->setHeaderData(4,Qt::Horizontal,tr("MCQ"));
+    mainModel->setHeaderData(5,Qt::Horizontal,tr("Total"));
+
+    if(!mainModel->select()){
+        QMessageBox::critical(this,"Database Error","Could not load student data:"+mainModel->lastError().text());
+        return;
     }
 
-    ui->assignmentTableView->setModel(model);
+    proxyModel=new QSortFilterProxyModel(this);
+    proxyModel->setSourceModel(mainModel);
+
+    ui->assignmentTableView->setModel(proxyModel);
     ui->assignmentTableView->resizeColumnsToContents();
 }
 
@@ -47,40 +50,57 @@ assignmentscores::~assignmentscores()
 
 void assignmentscores::on_backButton_clicked()
 {
+    if(mainModel->isDirty())
+    {
+        QMessageBox::StandardButton reply;
+        reply=QMessageBox::question(this,"Unsaved Changes","Do you want to save the changes?",QMessageBox::Yes|QMessageBox::No|QMessageBox::Cancel);
+        if(reply==QMessageBox::Yes)
+        {
+            mainModel->submitAll();
+        }
+        else if(reply==QMessageBox::Cancel)
+        {
+            return;
+        }
+    }
     emit backToLandingPage();
     close();
 }
 
 void assignmentscores::on_saveButton_clicked()
 {
-    QString currentFile = QFileDialog::getSaveFileName(this,
-                                                       "Save As",
-                                                       "",
-                                                       "CSV File (*.csv);;Text File (*.txt)");
-
-    if (currentFile.isEmpty()) {
-        return;
+    if(mainModel->submitAll())
+    {
+        statusBar()->showMessage("Changes saved successfully",500);
     }
-    QFile file(currentFile);
-    if (!file.open(QIODevice::WriteOnly | QFile::Text)) {
-        QMessageBox::warning(this, "WARNING", "Cannot save file:" + file.errorString());
-        return;
+    else
+    {
+        statusBar()->showMessage("Could not save changes:"+mainModel->lastError().text(),500);
     }
-    QTextStream out(&file);
-    QStandardItemModel *model = qobject_cast<QStandardItemModel *>(ui->assignmentTableView->model());
-    if (!model) {
-        QMessageBox::critical(this, "Error", "Could not get table model.");
-        return;
-    }
-    for (int row = 0; row < model->rowCount(); ++row) {
-        for (int col = 0; col < model->columnCount(); ++col) {
-            QStandardItem *item = model->item(row, col);
-            if (item) {
-                out << item->text();
-            }
-        }
-        out << "\n";
-    }
-    file.close();
-    QMessageBox::information(this, "Success", "File saved successfully!");
 }
+
+void assignmentscores::on_addStudentButton_clicked()
+{
+    mainModel->insertRow(mainModel->rowCount());
+    ui->assignmentTableView->scrollToBottom();
+}
+
+void assignmentscores::on_DeleteStudentButton_clicked()
+{
+    QItemSelectionModel *selectionModel = ui->assignmentTableView->selectionModel();
+    if (!selectionModel->hasSelection()) {
+        statusBar()->showMessage("Please select students to delete.");
+        return;
+    }
+
+    QModelIndexList selectedRows = selectionModel->selectedRows();
+
+    std::sort(selectedRows.rbegin(), selectedRows.rend());
+
+    for (const QModelIndex &viewIndex : selectedRows) {
+        QModelIndex sourceIndex = proxyModel->mapToSource(viewIndex);
+        mainModel->removeRow(sourceIndex.row());
+    }
+    statusBar()->showMessage("Rows Removed");
+}
+
